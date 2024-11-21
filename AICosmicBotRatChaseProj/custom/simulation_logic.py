@@ -81,7 +81,7 @@ class Simulation:
                             if path:
                                 self.bfs_paths.append(path)
 
-                        # Choosing a random path
+                        #  a random path is chosen
                         if self.bfs_paths:
                             chosen_path = random.choice(self.bfs_paths)
                             self.bot.set_goal_path(chosen_path, rat_kbase)
@@ -111,7 +111,7 @@ class Simulation:
             # Draw the grid and modify the display during the localization phase
             self.draw_grid(screen)
             pygame.display.flip()
-            clock.tick(5)  # FPS for localization phase
+            clock.tick(5)  # timer
 
         pygame.quit()
 
@@ -135,7 +135,6 @@ class Simulation:
             if math.isclose(probability, self.real_detection_probability, rel_tol=1e-9):
                 matching_cells.append(cell)
         
-        # print(f"Found goal cells with matching detection probability: {matching_cells}")
         return matching_cells
 
     def bfs_path(self, start, goal):
