@@ -10,7 +10,7 @@ class RatKnowledgeBase:
         self.rat_detection_probabilities = self.calc_detection_probabilities()
 
     def manhattan_dist(self, pos1, pos2):
-        """Calculate the Manhattan dist between two locs."""
+        #Calculating manhattan distance between two points
         return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
 
     def calc_detection_probabilities(self):
