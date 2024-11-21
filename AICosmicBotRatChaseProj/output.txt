@@ -1,0 +1,8 @@
+There are four folders:
+
+--baseline_bot_rat_moves
+--baselineBot
+--custom 
+--custom_bot_rat_moves
+
+In order to run each bot open the given folder and run the main.py file 
