@@ -5,5 +5,5 @@ from rat import Rat
 from ship_environment_logic import ShipEnvironment
 
 if __name__ == "__main__":
-    simulation = Simulation()
-    simulation.run()
+    simulate = Simulation()
+    simulate.run()

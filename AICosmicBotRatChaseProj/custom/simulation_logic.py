@@ -24,13 +24,13 @@ SCREEN_SIZE = CELL_SIZE * GRID_SIZE
 
 class Simulation:
     def __init__(self):
-        self.env = ShipEnvironment(size=GRID_SIZE)
-        self.kb = KnowledgeBase(self.env)
-        self.bot = Bot(self.env, self.kb)
-        self.rat = Rat(self.env, self.bot.position)
+        self.environment = ShipEnvironment(size=GRID_SIZE)
+        self.kbase = KnowledgeBase(self.environment)
+        self.bot = Bot(self.environment, self.kbase)
+        self.rat = Rat(self.environment, self.bot.loc)
         self.real_detection_probability = None  # Initialize real_detection_probability as None
-        self.target_cells = []  # Initialize target_cell
-        self.bfs_paths = []  # To store all BFS paths to each target cell
+        self.goal_cells = []  # Initialize goal_cell
+        self.bfs_paths = []  # To store all BFS paths to each goal cell
 
 
     def run(self):
@@ -47,70 +47,70 @@ class Simulation:
 
             # Run the bot localization process
             sensed_directions = self.bot.sense_directions()
-            self.kb.filter_positions(sensed_directions)
+            self.kbase.filter_locs(sensed_directions)
             move_success = self.bot.move()
 
              # Move the rat at each time step
             self.rat.move()
 
             # If the bot cannot move or has localized itself, end the localization and move towards the rat
-            if not move_success or len(self.kb.possible_positions) == 1:
-                if len(self.kb.possible_positions) == 1:
+            if not move_success or len(self.kbase.eligible_locs) == 1:
+                if len(self.kbase.eligible_locs) == 1:
                     print("Simulation complete: Bot has located itself.")
-                    bot_position = list(self.kb.possible_positions)[0]
-                    print(f"Bot's detected location: {bot_position}")
+                    bot_loc = list(self.kbase.eligible_locs)[0]
+                    print(f"Bot's detected loc: {bot_loc}")
 
                     # Create Rat Knowledge Base after bot localization
-                    rat_kb = RatKnowledgeBase(self.env, bot_position, alpha=0.5)
-                    self.target_cells = [cell for cell, _ in rat_kb.rat_detection_probabilities.items()]
+                    rat_kbase = RatKnowledgeBase(self.environment, bot_loc, alpha=0.5)
+                    self.goal_cells = [cell for cell, _ in rat_kbase.rat_detection_probabilities.items()]
 
                     # Continue the refinement process as long as the bot has not found the rat
                     while True:
                         self.rat.move()  # Move the rat at each time step
 
-                        # Calculate real detection probability from the rat's real position to the bot's position
+                        # Calculate real detection probability from the rat's real loc to the bot's loc
                         self.real_detection_probability = self.calculate_real_detection_probability(
-                            self.bot.position, self.rat.position, alpha=0.5
+                            self.bot.loc, self.rat.loc, alpha=0.5
                         )
-                        self.target_cells = self.find_matching_probability_cell(rat_kb)
-                        rat_kb.filter_to_target_cells(self.target_cells)
+                        self.goal_cells = self.find_matching_probability_cell(rat_kbase)
+                        rat_kbase.filter_to_goal_cells(self.goal_cells)
 
-                        # Generate BFS paths to each target cell
+                        # Generate BFS paths to each goal cell
                         self.bfs_paths.clear()
-                        for target in self.target_cells:
-                            path = self.bfs_path(self.bot.position, target)
+                        for goal in self.goal_cells:
+                            path = self.bfs_path(self.bot.loc, goal)
                             if path:
                                 self.bfs_paths.append(path)
 
                         # Choose a path to follow from the generated BFS paths
                         if self.bfs_paths:
                             chosen_path = random.choice(self.bfs_paths)
-                            self.bot.set_target_path(chosen_path, rat_kb)
-                            self.bot.move_to_target()
+                            self.bot.set_goal_path(chosen_path, rat_kbase)
+                            self.bot.move_to_goal()
 
                         # Check if the bot has reached the rat
-                        if self.bot.position == self.rat.position:
+                        if self.bot.loc == self.rat.loc:
                             print("Bot has reached the rat.")
-                            running = False  # End the simulation
+                            running = False  # End the simulate
                             break
 
-                        # Draw the updated grid after each step
+                        # Draw the modifyd grid after each step
                         self.draw_grid(screen)
                         pygame.display.flip()
                         clock.tick(2)  # Control the speed for better observation
 
                 # Visualize the final path to the rat after localization
-                if self.bot.target_path:
-                    while self.bot.target_path:
+                if self.bot.goal_path:
+                    while self.bot.goal_path:
                         # Move the bot to the next step in the final path
-                        self.bot.move_to_target()
+                        self.bot.move_to_goal()
                         self.draw_grid(screen)
                         pygame.display.flip()
                         clock.tick(2)  # Slow down for better observation of each final move
                     print("Final path completed. Bot has reached the rat.")
-                    running = False  # End simulation after reaching the rat
+                    running = False  # End simulate after reaching the rat
 
-            # Draw the grid and update the display during the localization phase
+            # Draw the grid and modify the display during the localization phase
             self.draw_grid(screen)
             pygame.display.flip()
             clock.tick(5)  # FPS for localization phase
@@ -118,63 +118,63 @@ class Simulation:
         pygame.quit()
 
 
-    def calculate_real_detection_probability(self, bot_position, rat_position, alpha):
+    def calculate_real_detection_probability(self, bot_loc, rat_loc, alpha):
         """Calculate the real detection probability based on the formula."""
-        # Manhattan distance between bot and rat
-        distance = abs(bot_position[0] - rat_position[0]) + abs(bot_position[1] - rat_position[1])
+        # Manhattan dist between bot and rat
+        dist = abs(bot_loc[0] - rat_loc[0]) + abs(bot_loc[1] - rat_loc[1])
         # Detection probability using the given formula
-        detection_probability = math.exp(-alpha * (distance - 1))
-        print(f"Real detection probability from rat at {rat_position} to bot at {bot_position}: {detection_probability}")
+        detection_probability = math.exp(-alpha * (dist - 1))
+        print(f"Real detection probability from rat at {rat_loc} to bot at {bot_loc}: {detection_probability}")
         return detection_probability
     
 
-    def find_matching_probability_cell(self, rat_kb):
+    def find_matching_probability_cell(self, rat_kbase):
         """Find all cells in RatKnowledgeBase that match the real detection probability."""
         matching_cells = []
         if self.real_detection_probability is None:
             # print("Real detection probability not set. Exiting search for matching cells.")
             return matching_cells
 
-        for cell, probability in rat_kb.rat_detection_probabilities.items():
+        for cell, probability in rat_kbase.rat_detection_probabilities.items():
             if math.isclose(probability, self.real_detection_probability, rel_tol=1e-9):
                 matching_cells.append(cell)
         
-        # print(f"Found target cells with matching detection probability: {matching_cells}")
+        # print(f"Found goal cells with matching detection probability: {matching_cells}")
         return matching_cells
 
-    def bfs_path(self, start, target):
-        """Perform BFS to find the shortest path from start to target in the grid."""
+    def bfs_path(self, start, goal):
+        """Perform BFS to find the shortest path from start to goal in the grid."""
         queue = deque([(start, [start])])  # Queue holds tuples of (current cell, path to this cell)
         visited = set([start])
 
         while queue:
             current, path = queue.popleft()
 
-            if current == target:
-                return path  # Return the path when target is reached
+            if current == goal:
+                return path  # Return the path when goal is reached
 
             # Explore neighbors
             for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:  # N, S, W, E directions
                 neighbor = (current[0] + dr, current[1] + dc)
 
                 # Check if the neighbor is within bounds and is an open cell
-                if (0 <= neighbor[0] < self.env.size and 0 <= neighbor[1] < self.env.size
-                    and self.env.matrix[neighbor[0]][neighbor[1]] == 0 and neighbor not in visited):
+                if (0 <= neighbor[0] < self.environment.size and 0 <= neighbor[1] < self.environment.size
+                    and self.environment.matrix[neighbor[0]][neighbor[1]] == 0 and neighbor not in visited):
                     visited.add(neighbor)
                     queue.append((neighbor, path + [neighbor]))
 
-        return None  # No path found if we exit the loop without reaching the target
+        return None  # No path found if we exit the loop without reaching the goal
 
 
     def draw_grid(self, screen):
-        for r in range(self.env.size):
-            for c in range(self.env.size):
+        for r in range(self.environment.size):
+            for c in range(self.environment.size):
                 rect = pygame.Rect(c * CELL_SIZE, r * CELL_SIZE, CELL_SIZE, CELL_SIZE)
-                if (r, c) == self.bot.position:
-                    pygame.draw.rect(screen, BLUE, rect)  # Bot's position
-                elif (r, c) == self.rat.position:
-                    pygame.draw.rect(screen, GREEN, rect)  # Rat's position
-                elif self.env.matrix[r][c] == 1:
+                if (r, c) == self.bot.loc:
+                    pygame.draw.rect(screen, BLUE, rect)  # Bot's loc
+                elif (r, c) == self.rat.loc:
+                    pygame.draw.rect(screen, GREEN, rect)  # Rat's loc
+                elif self.environment.matrix[r][c] == 1:
                     pygame.draw.rect(screen, GRAY, rect)  # Blocked cells
                 else:
                     pygame.draw.rect(screen, YELLOW, rect)  # Open cells

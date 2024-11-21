@@ -75,7 +75,7 @@ class ShipEnvironment:
             self.matrix[i][self.size - 1] = 1   # Right edge
 
 
-    def place_random_open_cell(self, avoid_cells=[]):
+    def position_random_open_cell(self, avoid_cells=[]):
         open_cells = [(r, c) for r in range(1, self.size - 1) for c in range(1, self.size - 1)
                       if self.matrix[r][c] == 0 and (r, c) not in avoid_cells]
         if not open_cells:
