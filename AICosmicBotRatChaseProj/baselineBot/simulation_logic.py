@@ -48,16 +48,16 @@ class Simulation:
                 if event.type == pygame.QUIT:
                     running = False
 
-            sensed_directions = self.bot.sense_directions()
-            self.kbase.filter_locs(sensed_directions)
+            sensed_possible_moves = self.bot.sense_possible_moves()
+            self.kbase.filter_locs(sensed_possible_moves)
             move_success = self.bot.move()
             self.step_counter += 1 if move_success else 0  # Increment step count on successful moves
 
 
-            if not move_success or len(self.kbase.eligible_locs) == 1:
-                if len(self.kbase.eligible_locs) == 1:
+            if not move_success or len(self.kbase.poss_locs) == 1:
+                if len(self.kbase.poss_locs) == 1:
                     print("Bot has localized itself.")
-                    bot_loc = list(self.kbase.eligible_locs)[0]
+                    bot_loc = list(self.kbase.poss_locs)[0]
                     rat_kbase = RatKnowledgeBase(self.environment, bot_loc)
                     filter_dist = 10  # Starting filter dist
 
@@ -148,7 +148,7 @@ class Simulation:
                             # Update the rat knowledge base to include only cells with a Manhattan dist of 10 or more
                             rat_kbase.filter_cells_by_dist(10, greater_than=True)  # Retain only cells >= 10 dist
 
-                            # Retrieve eligible cells to move towards, filtered by dist
+                            # Retrieve poss cells to move towards, filtered by dist
                             far_cells = list(rat_kbase.rat_detection_probabilities.keys())
                             
                             # If there are far cells to choose from, proceed with movement
@@ -201,7 +201,7 @@ class Simulation:
                 return path  # Return the path when goal is reached
 
             # Explore neighbors
-            for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:  # N, S, W, E directions
+            for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:  # N, S, W, E possible_moves
                 neighbor = (current[0] + dr, current[1] + dc)
 
                 # Check if the neighbor is within bounds and is an open cell

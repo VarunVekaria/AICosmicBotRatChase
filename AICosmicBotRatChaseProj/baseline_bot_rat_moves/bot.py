@@ -10,8 +10,8 @@ class Bot:
     def __init__(self, environment, knowledge_base):
         self.environment = environment
         self.kbase = knowledge_base
-        self.loc = random.choice(list(self.kbase.eligible_locs))
-        self.prev_history = []
+        self.loc = random.choice(list(self.kbase.poss_locs))
+        self.prev_hist = []
         self.recent_locs = deque(maxlen=20)
         self.goal_path = []
         self.rat_kbase = None
@@ -25,7 +25,7 @@ class Bot:
         if self.goal_path:
             next_loc = self.goal_path.pop(0)
             self.loc = next_loc
-            self.prev_history.append(self.loc)
+            self.prev_hist.append(self.loc)
             self.recent_locs.append(self.loc)  # Diff
             print(f"Bot moved to {self.loc} along the goal path.")
             if self.rat_kbase:
@@ -34,7 +34,6 @@ class Bot:
     def detect_osc(self):
         # Check if recent locs contain a repeating pattern
         if len(set(self.recent_locs)) <= 4:
-            print("oscccccccccc")
             return True
         return False
     
@@ -48,7 +47,6 @@ class Bot:
             # Choose a cell that's not in recent locs
             chosen_cell = random.choice(open_cells)
             path_to_chosen_cell = simulate.bfs_path(self.loc, chosen_cell)
-            print(f"printingggg{path_to_chosen_cell}")
 
             if path_to_chosen_cell:
                 # Move several steps along this path to break out of the loop
@@ -56,7 +54,7 @@ class Bot:
                 
                 for step in range(1, steps_to_move + 1):
                     self.loc = path_to_chosen_cell[step]
-                    self.prev_history.append(self.loc)
+                    self.prev_hist.append(self.loc)
                     self.recent_locs.append(self.loc)
                     
                     # Update the display after each step
@@ -65,26 +63,26 @@ class Bot:
                     clock.tick(10)  # Adjust speed as needed
 
 
-    def sense_directions(self):
+    def sense_possible_moves(self):
         r, c = self.loc
         return self.kbase.get_open_neighbors(r, c)
 
     def move(self):
-        probabilities = self.kbase.calculate_dir_probabilities()
+        probabilities = self.kbase.calc_dir_probabilities()
         if probabilities is None:
             print("No available moves. Stopping.")
             return False
-        directions_map = [(0, 1), (0, -1), (-1, 0), (1, 0)]
-        chosen_dir_index = random.choices(range(4), weights=probabilities, k=1)[0]
-        dr, dc = directions_map[chosen_dir_index]
+        possible_moves_map = [(0, 1), (0, -1), (-1, 0), (1, 0)]
+        chosen_dir_idx = random.choices(range(4), weights=probabilities, k=1)[0]
+        dr, dc = possible_moves_map[chosen_dir_idx]
         new_loc = (self.loc[0] + dr, self.loc[1] + dc)
         if (0 <= new_loc[0] < self.environment.size and
             0 <= new_loc[1] < self.environment.size and
             self.environment.matrix[new_loc[0]][new_loc[1]] == 0):
             self.loc = new_loc
-            self.prev_history.append(self.loc)
+            self.prev_hist.append(self.loc)
             print(f"Bot moved to {self.loc}")
-            self.kbase.modify_eligible_locs(dr, dc)
+            self.kbase.modify_poss_locs(dr, dc)
             return True
         print("Bot could not move in the chosen direction.")
         return False

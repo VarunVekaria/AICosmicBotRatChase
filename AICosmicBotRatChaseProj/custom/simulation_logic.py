@@ -46,18 +46,18 @@ class Simulation:
                     running = False
 
             # Run the bot localization process
-            sensed_directions = self.bot.sense_directions()
-            self.kbase.filter_locs(sensed_directions)
+            sensed_possible_moves = self.bot.sense_possible_moves()
+            self.kbase.filter_locs(sensed_possible_moves)
             move_success = self.bot.move()
 
              # Move the rat at each time step
             self.rat.move()
 
             # If the bot cannot move or has localized itself, end the localization and move towards the rat
-            if not move_success or len(self.kbase.eligible_locs) == 1:
-                if len(self.kbase.eligible_locs) == 1:
+            if not move_success or len(self.kbase.poss_locs) == 1:
+                if len(self.kbase.poss_locs) == 1:
                     print("Simulation complete: Bot has located itself.")
-                    bot_loc = list(self.kbase.eligible_locs)[0]
+                    bot_loc = list(self.kbase.poss_locs)[0]
                     print(f"Bot's detected loc: {bot_loc}")
 
                     # Create Rat Knowledge Base after bot localization
@@ -69,7 +69,7 @@ class Simulation:
                         self.rat.move()  # Move the rat at each time step
 
                         # Calculate real detection probability from the rat's real loc to the bot's loc
-                        self.real_detection_probability = self.calculate_real_detection_probability(
+                        self.real_detection_probability = self.calc_real_detection_probability(
                             self.bot.loc, self.rat.loc, alpha=0.5
                         )
                         self.goal_cells = self.find_matching_probability_cell(rat_kbase)
@@ -118,7 +118,7 @@ class Simulation:
         pygame.quit()
 
 
-    def calculate_real_detection_probability(self, bot_loc, rat_loc, alpha):
+    def calc_real_detection_probability(self, bot_loc, rat_loc, alpha):
         """Calculate the real detection probability based on the formula."""
         # Manhattan dist between bot and rat
         dist = abs(bot_loc[0] - rat_loc[0]) + abs(bot_loc[1] - rat_loc[1])
@@ -154,7 +154,7 @@ class Simulation:
                 return path  # Return the path when goal is reached
 
             # Explore neighbors
-            for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:  # N, S, W, E directions
+            for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:  # N, S, W, E possible_moves
                 neighbor = (current[0] + dr, current[1] + dc)
 
                 # Check if the neighbor is within bounds and is an open cell

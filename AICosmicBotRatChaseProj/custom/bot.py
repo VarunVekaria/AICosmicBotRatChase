@@ -5,9 +5,9 @@ class Bot:
     def __init__(self, environment, knowledge_base):
         self.environment = environment
         self.kbase = knowledge_base
-        self.loc = random.choice(list(self.kbase.eligible_locs))  # Starting from an unknown open cell
+        self.loc = random.choice(list(self.kbase.poss_locs))  # Starting from an unknown open cell
         print(self.loc)
-        self.prev_history = []  # Track previously visited cells to refine loc
+        self.prev_hist = []  # Track previously visited cells to refine loc
         self.recent_locs = []  # Track last two locs for loop detection
         self.goal_path = []  # Store the path to the selected goal cell
         self.rat_kbase = None 
@@ -27,7 +27,7 @@ class Bot:
         if self.goal_path:
             next_loc = self.goal_path.pop(0)  # Get the next step in the path
             self.loc = next_loc  # Update bot's loc
-            self.prev_history.append(self.loc)
+            self.prev_hist.append(self.loc)
             # Update RatKnowledgeBase with the new loc, only considering goal cells
             if self.rat_kbase:
                 self.rat_kbase.modify_goal_cells(self.loc)
@@ -35,25 +35,25 @@ class Bot:
             print("Target path completed.")
             self.goal_path = None  # Clear the path once the bot reaches the goal
             
-    def sense_directions(self):
+    def sense_possible_moves(self):
         """Sense which neighboring cells are open in (E, W, N, S) format."""
         r, c = self.loc
-        directions = self.kbase.get_open_neighbors(r, c)
-        # print(f"Sensed directions at {self.loc}: {directions}")
-        return directions
+        possible_moves = self.kbase.get_open_neighbors(r, c)
+        # print(f"Sensed possible_moves at {self.loc}: {possible_moves}")
+        return possible_moves
 
     def move(self):
-        probabilities = self.kbase.calculate_dir_probabilities()
+        probabilities = self.kbase.calc_dir_probabilities()
         if probabilities is None:
             print("No available moves. Stopping.")
-            return False  # No movement eligible
+            return False  # No movement poss
 
-        # Map directions to their respective movement deltas
-        directions_map = [(0, 1), (0, -1), (-1, 0), (1, 0)]  # E, W, N, S
+        # Map possible_moves to their respective movement deltas
+        possible_moves_map = [(0, 1), (0, -1), (-1, 0), (1, 0)]  # E, W, N, S
 
         # Choose a direction based on the probabilities
-        chosen_dir_index = random.choices(range(4), weights=probabilities, k=1)[0]
-        dr, dc = directions_map[chosen_dir_index]
+        chosen_dir_idx = random.choices(range(4), weights=probabilities, k=1)[0]
+        dr, dc = possible_moves_map[chosen_dir_idx]
         new_loc = (self.loc[0] + dr, self.loc[1] + dc)
 
         # Check if the selected direction leads to an open cell
@@ -63,12 +63,12 @@ class Bot:
             
             # Move to the new loc
             self.loc = new_loc
-            self.prev_history.append(self.loc)
+            self.prev_hist.append(self.loc)
             self.modify_recent_locs(new_loc)
             print(f"Bot moved to {self.loc}")
 
             # Update Knowledge Base locs
-            self.kbase.modify_eligible_locs(dr, dc)
+            self.kbase.modify_poss_locs(dr, dc)
             return True  # Move successful
 
         print("Bot could not move in the chosen direction.")

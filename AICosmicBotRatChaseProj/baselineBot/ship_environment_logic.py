@@ -15,9 +15,9 @@ class ShipEnvironment:
 
     def get_neighbor_cells(self, row, col):
         """Returns a list of valid neighbors for a given cell."""
-        directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+        possible_moves = [(-1, 0), (1, 0), (0, -1), (0, 1)]
         neighbors = []
-        for dr, dc in directions:
+        for dr, dc in possible_moves:
             nr, nc = row + dr, col + dc
             if 0 <= nr < self.size and 0 <= nc < self.size:
                 neighbors.append((nr, nc))

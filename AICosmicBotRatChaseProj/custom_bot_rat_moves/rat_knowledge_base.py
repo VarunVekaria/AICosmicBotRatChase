@@ -7,18 +7,18 @@ class RatKnowledgeBase:
         self.environment = environment
         self.bot_loc = bot_loc
         self.alpha = alpha
-        self.rat_detection_probabilities = self.calculate_detection_probabilities()
+        self.rat_detection_probabilities = self.calc_detection_probabilities()
 
     def manhattan_dist(self, pos1, pos2):
         """Calculate the Manhattan dist between two locs."""
         return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
 
-    def calculate_detection_probabilities(self):
+    def calc_detection_probabilities(self):
         """Calculate and store the probability of detecting a ping for each open cell."""
         detection_probs = {}
         for r in range(1, self.environment.size - 1):
             for c in range(1, self.environment.size - 1):
-                if self.environment.matrix[r][c] == 0:  # Only consider open cells
+                if self.environment.matrix[r][c] == 0:  
                     dist = self.manhattan_dist(self.bot_loc, (r, c))
                     probability = math.exp(-(self.alpha * (dist - 1)))
                     detection_probs[(r, c)] = probability
