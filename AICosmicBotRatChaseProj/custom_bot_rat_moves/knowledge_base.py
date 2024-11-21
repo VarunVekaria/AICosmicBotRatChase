@@ -26,14 +26,14 @@ class KnowledgeBase:
         return tuple(neighbors)  # (E, W, N, S)
 
     def filter_locs(self, sensed_possible_moves):
-        """Filter poss locs based on the current sensed possible_moves (E, W, N, S)."""
+        
         self.poss_locs = {
             pos for pos in self.poss_locs if self.open_cells_data[pos] == sensed_possible_moves
         }
         print(f"Knowledge Base modify: Remaining poss locs: {self.poss_locs}")
 
     def calc_dir_probabilities(self):
-        """Calculate the probability of each direction (E, W, N, S) based on remaining locs."""
+        
         dir_counts = [0, 0, 0, 0]  # E, W, N, S
         for pos in self.poss_locs:
             for i, open_positions in enumerate(self.open_cells_data[pos]):
@@ -47,12 +47,11 @@ class KnowledgeBase:
         return [count / total_open for count in dir_counts]  # Probabilities for E, W, N, S
 
     def modify_poss_locs(self, dr, dc):
-        """Update each cell in poss_locs by attempting to move in the bot's direction."""
         new_poss_locs = set()
         
         for pos in self.poss_locs:
             new_pos = (pos[0] + dr, pos[1] + dc)
-            # Check if new loc is within bounds and open
+            # we check if new loc is within bounds i.e if we can even go there
             if 0 <= new_pos[0] < self.environment.size and 0 <= new_pos[1] < self.environment.size:
                 if self.environment.matrix[new_pos[0]][new_pos[1]] == 0:  # Only retain open cells
                     new_poss_locs.add(new_pos)
@@ -61,8 +60,7 @@ class KnowledgeBase:
         print(f"Knowledge Base modify: Remaining poss locs after bot move: {self.poss_locs}")
 
     def enforce_stricter_filtering(self, oscillating_loc):
-        """Apply stricter filtering by removing the oscillating loc from poss locs."""
-        # Remove the oscillating loc to prevent the bot from revisiting it
+        #Remove the oscillating location in case it gets stuck in loop
         if oscillating_loc in self.poss_locs:
             self.poss_locs.remove(oscillating_loc)
             print(f"Stricter filtering applied. Removed oscillating loc: {oscillating_loc}")
