@@ -1,4 +1,4 @@
-# Bot and Rat Tracking Simulation
+# Bot and Rat Tracking Simulation - Project 2
 
 This repository contains a simulation project for a bot and rat tracking environment using a grid system. The project implements various classes for environment simulation, bot and rat behavior, probabilistic detection, and knowledge management.
 
